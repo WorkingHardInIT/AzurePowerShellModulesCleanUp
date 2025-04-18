@@ -183,12 +183,6 @@ foreach ($key in ($moduleGroups.Keys | Sort-Object)) {
                 try {
                     #When you absolutely need to 'shut up' remove-item feedback interfering with your custom outpout!
                     [System.IO.Directory]::Delete($path, $true)
-                    # $VerbosePreference = 'SilentlyContinue'
-                    # $InformationPreference = 'SilentlyContinue'
-                    # $null = & {
-                    #     Remove-Item -Path $path -Recurse -Force -ErrorAction Stop
-                    # } *>&1 | Out-Null
-
                     Write-Msg "$(Get-EmojiLabel 'delete') Manually deleted $path" -Color $color
                 }
                 catch {
