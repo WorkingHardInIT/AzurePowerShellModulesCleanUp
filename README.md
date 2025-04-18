@@ -44,7 +44,7 @@ Run the script directly in a Windows Terminal PowerShell session:
 .\CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1
 ```
 
-> 💡 If not run as Administrator, the script will prompt to elevate. If declined, only `CurrentUser` modules will be cleaned.
+> 💡 If not run as Administrator, the script will prompt to elevate. If declined, only `CurrentUser` modules will be cleaned.  
 > ❗ If you don't have Windows Terminal, get it or adapt the script to launch Powershell.exe or pwsh.exe directly
 ---
 
