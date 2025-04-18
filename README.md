@@ -38,14 +38,14 @@ Or simply download [`CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1`](./Cle
 
 ## 🚀 Usage
 
-Run the script directly in a PowerShell session:
+Run the script directly in a Windows Terminal PowerShell session:
 
 ```powershell
 .\CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1
 ```
 
 > 💡 If not run as Administrator, the script will prompt to elevate. If declined, only `CurrentUser` modules will be cleaned.
-
+> ❗ If you don't have Windows Terminal, get it or adapt the script to launch Powershell.exe or pwsh.exe directly
 ---
 
 ## 📝 Logs
