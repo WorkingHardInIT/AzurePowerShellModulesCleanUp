@@ -76,23 +76,32 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 if (-not $IsAdmin) {
     Write-Msg "`n$(Get-EmojiLabel 'warn') This script is not running in an elevated console. AllUsers module cleanup will be skipped." Yellow
     $choice = Read-Host "Do you want to restart this script with administrative privileges? (Y/N)"
-    if ($choice -match '^[Yy]$') {
+        if ($choice -match '^[Yy]$') {
+        # Escape the script path
         $escapedScript = ($MyInvocation.MyCommand.Path).Replace('"', '""')
-        if (Get-Command "pwsh.exe" -ErrorAction SilentlyContinue) {
-            $wtArgs = "pwsh.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -DryRun:$DryRun"
+        $shell = if (Get-Command "pwsh.exe" -ErrorAction SilentlyContinue) { "pwsh.exe" } else { "powershell.exe" }
+
+        # Get parent process details
+        $parent = Get-CimInstance Win32_Process -Filter "ProcessId = $((Get-Process -Id $PID).Parent.Id)"
+        $parentCmdLine = $parent.CommandLine
+
+        # Detect if we're in Windows Terminal
+        $isWindowsTerminal = $parentCmdLine -match 'WindowsTerminal.exe'
+
+        if ($isWindowsTerminal -and (Get-Command "wt.exe" -ErrorAction SilentlyContinue)) {
+            # Relaunch inside Windows Terminal
+            $wtArgs = "$shell -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -DryRun:$DryRun"
+            Start-Process -FilePath "wt.exe" -ArgumentList $wtArgs -Verb RunAs
         }
         else {
-            $wtArgs = "powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -DryRun:$DryRun"
+            # Relaunch in plain PowerShell or PowerShell Core console
+            Start-Process -FilePath $shell -ArgumentList "-NoExit", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$escapedScript`"", "-DryRun:$DryRun" -Verb RunAs
         }
-        Start-Process -FilePath "wt.exe" -ArgumentList $wtArgs -Verb RunAs
         Exit
     }
     else {
         Write-Msg "`n$(Get-EmojiLabel 'success') Running non-elevated console. CurrentUser module cleanup will be performed and AllUsers module cleanup will be skipped." Green
     }
-}
-else {
-    Write-Msg "`n$(Get-EmojiLabel 'success') Running elevated console. CurrentUser module cleanup and AllUsers module cleanup will be performed." Green
 }
 
 
