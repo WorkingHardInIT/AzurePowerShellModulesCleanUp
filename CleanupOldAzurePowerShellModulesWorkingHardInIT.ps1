@@ -1,11 +1,13 @@
-
+# Dry-run toggle (now a parameter)
+param (
+    [bool]$DryRun = $false
+)
 # Detect Windows PowerShell vs PowerShell Core
 $IsWindowsPowerShell = $PSVersionTable.PSEdition -eq 'Desktop'
 $UseEmoji = -not $IsWindowsPowerShell
 
-# Emoji to ANSI fallback for Windows PowerShell
 
-#We need this ANSI Code based emoji and a translation table to [label] to use in Windows PowerShell.
+# Emoji to ANSI fallback for Windows PowerShell
 $EmojiMap = @{
     'info'      = @{ Emoji = "`u{2139}"; Label = '[INFO]' }  # ℹ️
     'warn'      = @{ Emoji = "`u{26A0}"; Label = '[WARNING]' }  # ⚠️
@@ -20,12 +22,13 @@ $EmojiMap = @{
     'lock'      = @{ Emoji = "`u{26D4}"; Label = '[LOCKED]' }  # ⛔
     'skip'      = @{ Emoji = "`u{27A1}"; Label = '[SKIP]' }  # ➡️
     'delete'    = @{ Emoji = "`u{2757}"; Label = '[DELETE]' }  # ❗
+    'dryrun'    = @{ Emoji = "`u{1F9EA}"; Label = '[DRYRUN]' }  #
 }
 
 function Get-EmojiLabel {
     param (
         [Parameter(Mandatory)]
-        [ValidateSet('info', 'warn', 'fail', 'success', 'hourglass', 'search', 'gear', 'pin', 'puzzle', 'list', 'lock', 'skip', 'delete')]
+        [ValidateSet('info', 'warn', 'fail', 'success', 'hourglass', 'search', 'gear', 'pin', 'puzzle', 'list', 'lock', 'skip', 'delete', 'dryrun')]
         [string]$type
     )
     if ($UseEmoji) {
@@ -36,7 +39,7 @@ function Get-EmojiLabel {
     }
 }
 
-# Initialize logging 
+# Initialize logging
 $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $ScriptPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 $logDir = Join-Path $ScriptPath "AzModuleCleanupLogs"
@@ -64,6 +67,11 @@ function Write-Msg {
     Add-Content -Path $htmlLog -Value $htmlLine
 }
 
+
+if ($DryRun) {
+     Write-Msg "`n$(Get-EmojiLabel 'dryrun') This script is executing a 'Dry Run' - NO changes will be made." Yellow
+}
+
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 if (-not $IsAdmin) {
     Write-Msg "`n$(Get-EmojiLabel 'warn') This script is not running in an elevated console. AllUsers module cleanup will be skipped." Yellow
@@ -71,12 +79,10 @@ if (-not $IsAdmin) {
     if ($choice -match '^[Yy]$') {
         $escapedScript = ($MyInvocation.MyCommand.Path).Replace('"', '""')
         if (Get-Command "pwsh.exe" -ErrorAction SilentlyContinue) {
-            $wtArgs = "pwsh.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`""
-            #FOR TESTING ONLY ==> FORCE WINDOWS POWERSHELL
-            #$wtArgs = "powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`""
+            $wtArgs = "pwsh.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -DryRun:$DryRun"
         }
         else {
-            $wtArgs = "powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`""
+            $wtArgs = "powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -File `"$escapedScript`" -DryRun:$DryRun"
         }
         Start-Process -FilePath "wt.exe" -ArgumentList $wtArgs -Verb RunAs
         Exit
@@ -89,13 +95,13 @@ else {
     Write-Msg "`n$(Get-EmojiLabel 'success') Running elevated console. CurrentUser module cleanup and AllUsers module cleanup will be performed." Green
 }
 
+
 Write-Msg "`n$(Get-EmojiLabel 'hourglass') Gathering all Az module versions installed on this device" -Color Green -isHeading
 Write-Msg "   This takes a while ... please be patient!" -Color Green
 
 $azModules = Get-Module -ListAvailable | Where-Object {
     $_.Name -eq 'Az' -or $_.Name -like 'Az.*'
 }
-
 
 Write-Msg "`n$(Get-EmojiLabel 'success') Ready gathering info, now we'll analyze it for duplicates..." -Color Green
 
@@ -172,16 +178,29 @@ foreach ($key in ($moduleGroups.Keys | Sort-Object)) {
             continue
         }
 
+        if ($DryRun) {
+            Write-Msg "$(Get-EmojiLabel 'dryrun') If not a dry run this would uninstall $name version $version from $path" -Color DarkYellow
+            continue
+        }
+
         try {
-            Uninstall-Module -Name $name -RequiredVersion $version -Force -ErrorAction Stop
-            Write-Msg "$(Get-EmojiLabel 'success') Successfully uninstalled $name version $version from $path" -Color $color
+            $usedPSResource = $false
+            if ($editionVal -eq 'PowerShellCore' -and (Get-Command '' -ErrorAction SilentlyContinue)) {
+                Uninstall-PSResource -Name $name -Version $version -Force -ErrorAction Stop
+                $usedPSResource = $true
+            }
+            else {
+                Uninstall-Module -Name $name -RequiredVersion $version -Force -ErrorAction Stop
+            }
+
+            $tool = if ($usedPSResource) { 'Uninstall-PSResource' } else { 'Uninstall-Module' }
+            Write-Msg "$(Get-EmojiLabel 'success') Successfully uninstalled $name version $version from $path using $tool" -Color $color
         }
         catch {
             Write-Msg "$(Get-EmojiLabel 'fail') Failed to uninstall $name version $version from $($path): $_" -Color Red
 
             if (Test-Path $path) {
                 try {
-                    #When you absolutely need to 'shut up' remove-item feedback interfering with your custom outpout!
                     [System.IO.Directory]::Delete($path, $true)
                     Write-Msg "$(Get-EmojiLabel 'delete') Manually deleted $path" -Color $color
                 }
