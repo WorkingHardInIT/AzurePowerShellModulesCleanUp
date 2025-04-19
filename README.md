@@ -30,7 +30,7 @@ A PowerShell utility for cleaning up old or duplicate versions of Azure PowerShe
 Clone this repo or download the `.ps1` script:
 
 ```bash
-git clone https://github.com/yourusername/az-module-cleanup.git
+git clone [https://github.com/WorkingHardInIT/AzurePowerShellModulesCleanUp.git]
 ```
 
 Or simply download [`CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1`](./CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1).
