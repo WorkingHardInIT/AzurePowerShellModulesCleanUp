@@ -1,4 +1,3 @@
-
 # 🔍 Az PowerShell Module Cleanup Script
 
 A PowerShell utility for cleaning up old or duplicate versions of Azure PowerShell (`Az`) modules across **Windows PowerShell** and **PowerShell Core**. It ensures that only the **latest version** of each `Az` module is retained—keeping your environment clean, fast, and free from version conflicts.
@@ -13,6 +12,8 @@ A PowerShell utility for cleaning up old or duplicate versions of Azure PowerShe
 - 🔄 Keeps only the latest version of each module
 - 📋 Logs results to both **Markdown** and **HTML**
 - 🎨 Color-coded output with emoji support in PowerShell Core, fallback labels in Windows PowerShell
+- 🏃‍♂️ **Dry Run** mode to simulate the cleanup process without making any changes
+- 🔧 Automatically switches between `Uninstall-Module` and `Uninstall-PSResource` based on PowerShell edition
 
 ---
 
@@ -38,14 +39,27 @@ Or simply download [`CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1`](./Cle
 
 ## 🚀 Usage
 
-Run the script directly in a Windows Terminal PowerShell session:
+Run the script directly in a PowerShell session:
 
 ```powershell
 .\CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1
 ```
 
-> 💡 If not run as Administrator, the script will prompt to elevate. If declined, only `CurrentUser` modules will be cleaned.  
-> ❗ If you don't have Windows Terminal, get it or adapt the script to launch Powershell.exe or pwsh.exe directly
+### 💡 **Dry Run Mode**
+
+The script includes a `-DryRun` parameter that simulates the cleanup process without making any actual changes to your system. To run the script in dry run mode, use:
+
+```powershell
+.\CleanupOldAzurePowerShellModulesWorkingHardInIT.ps1 -DryRun $true
+```
+
+In dry run mode:
+
+- No modules will be uninstalled.
+- The script will output what **would** happen, but no changes will be made to your environment.
+
+> 💡 If not run as Administrator, the script will prompt to elevate. If declined, only `CurrentUser` modules will be cleaned.
+
 ---
 
 ## 📝 Logs
@@ -83,8 +97,9 @@ Each run creates:
 
 ## ⚠️ Notes
 
-- Deletion of modules is attempted first via `Uninstall-Module`. If that fails, the script tries to remove directories manually.
-- To force elevation in PowerShell Core, `wt.exe` (Windows Terminal) is used to relaunch with admin rights.
+- **Dry Run Mode**: When the `-DryRun` parameter is used, the script simulates the cleanup, showing what would happen without making any changes to the system.
+- Deletion of modules done via either  `Uninstall-Module` or `Uninstall-PSResource` depending on whether that is available and appropriate (it can only be used for PowerShell Core modules).
+- To force elevation in PowerShell Core, `wt.exe` (Windows Terminal) is used to relaunch with admin rights. This also takes the DryRun parameter into account.
 
 ---
 
