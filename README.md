@@ -21,7 +21,7 @@ A PowerShell utility for cleaning up old or duplicate versions of Azure PowerShe
 
 - PowerShell 5.1 (Windows PowerShell) or PowerShell Core (7+)
 - Administrator privileges (for full cleanup including `AllUsers` modules)
-- `Az` modules already installed via `Install-Module`
+- `Az` modules already installed via `Install-Module` or, in case of PowerShell Core, via Install-PSResource
 
 ---
 
