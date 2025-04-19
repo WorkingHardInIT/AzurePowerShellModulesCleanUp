@@ -9,7 +9,7 @@ A PowerShell utility for cleaning up old or duplicate versions of Azure PowerShe
 - ✅ Detects all installed `Az` and `Az.*` modules
 - 🧩 Groups by PowerShell edition and installation scope (`CurrentUser` vs `AllUsers`)
 - ⛔ Skips removal of `AllUsers` modules if not run as Administrator
-- 🔄 Keeps only the latest version of each module
+- 🔄 Keeps only the latest installed version of each module
 - 📋 Logs results to both **Markdown** and **HTML**
 - 🎨 Color-coded output with emoji support in PowerShell Core, fallback labels in Windows PowerShell
 - 🏃‍♂️ **Dry Run** mode to simulate the cleanup process without making any changes
